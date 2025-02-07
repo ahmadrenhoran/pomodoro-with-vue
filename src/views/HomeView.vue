@@ -11,13 +11,17 @@
                     {{ minutes }}:{{ seconds }}
                 </vue-countdown>
 
-                <button v-if="!isCounting" @click="startCountdown"
-                    :class="`bg-white ${selectedTimer.textColor}  border-b-4 border-slate-300 font-semibold py-3 px-8 rounded-md shadow-md`">
+                <button v-if="!isCounting && !isPaused" @click="startCountdown"
+                    :class="`bg-white ${selectedTimer.textColor}  border-b-4 border-slate-300 text-l font-semibold py-3 px-8 rounded-md shadow-md`">
                     START
                 </button>
-                <button v-else @click="pauseCountdown"
-                    :class="`bg-white ${selectedTimer.textColor} border-b-4 border-slate-300  font-semibold py-3 px-8 rounded-md shadow-md`">
+                <button v-else-if="isCounting && !isPaused" @click="pauseCountdown"
+                    :class="`bg-white ${selectedTimer.textColor} border-b-4 border-slate-300 text-l  font-semibold py-3 px-8 rounded-md shadow-md`">
                     PAUSE
+                </button>
+                <button v-if="isPaused" @click="resumeCountdown"
+                    :class="`bg-white ${selectedTimer.textColor} border-b-4 border-slate-300 text-l  font-semibold py-3 px-8 rounded-md shadow-md`">
+                    RESUME
                 </button>
             </TimerContainer>
         </PomodoroContainer>
@@ -26,7 +30,7 @@
 
 <script setup>
     import {
-        ref
+        ref, computed
     } from 'vue';
     import PomodoroContainer from '@/components/PomodoroContainer.vue';
     import TimerContainer from '@/components/TimerContainer.vue';
@@ -64,25 +68,36 @@
             textColor: 'text-sky-700',
         }
     ]);
-
     const countdown = ref(null);
 
     const selectedTimer = ref(timerList.value[0]);
     const isCounting = ref(false);
+    const isPaused = ref(false);
 
     const startCountdown = () => {
         countdown.value.start();
         isCounting.value = true
+        isPaused.value = false;
     };
 
     const pauseCountdown = () => {
         countdown.value.pause();
-        isCounting.value = false
+        isCounting.value = false;
+        isPaused.value = true;
+    };
+
+    const resumeCountdown = () => {
+        countdown.value.continue();
+        isCounting.value = true;
+        isPaused.value = false;
     };
 
     const selectTimer = (choiceId) => {
+
+        countdown.value.abort();
         timerList.value.forEach(timer => timer.isSelected = false); // Reset semua isSelected
-        // isCounting = false;
+        isCounting.value = false;
+        isPaused.value = false
         const newTimer = timerList.value.find(timer => timer.id === choiceId);
         if (newTimer) {
             newTimer.isSelected = true;
